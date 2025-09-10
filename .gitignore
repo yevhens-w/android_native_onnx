@@ -1,0 +1,45 @@
+# Rust
+/target/
+Cargo.lock
+*.rs.bk
+
+# UniFFI generated files
+platforms/android/app/src/main/java/uniffi/
+platforms/ios/generated/
+
+# Android
+platforms/android/.gradle/
+platforms/android/app/build/
+platforms/android/build/
+platforms/android/local.properties
+platforms/android/.idea/
+platforms/android/*.iml
+platforms/android/app/src/main/jniLibs/
+android-libs
+
+# iOS
+platforms/ios/SharedCoreApp.xcodeproj/project.xcworkspace/
+platforms/ios/SharedCoreApp.xcodeproj/xcuserdata/
+platforms/ios/DerivedData/
+platforms/ios/*.xcuserstate
+
+# Dev Container
+.devcontainer/.vscode/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.so
+*.a
+*.lib
+*.dylib
+.cargo
+.claude

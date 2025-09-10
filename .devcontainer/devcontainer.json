@@ -1,0 +1,31 @@
+{
+    "name": "Rust Mobile Development",
+    "dockerFile": "Dockerfile",
+    "features": {
+        "ghcr.io/devcontainers/features/rust:1": {
+            "version": "latest",
+            "profile": "default"
+        },
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "rust-lang.rust-analyzer",
+                "vadimcn.vscode-lldb",
+                "ms-vscode.vscode-java-debug",
+                "mathiasfrohlich.Kotlin",
+                "sswg.swift-lang",
+                "ms-vscode.cmake-tools"
+            ]
+        }
+    },
+    "forwardPorts": [3000, 8080, 8081],
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "remoteUser": "vscode",
+    "mounts": [
+        "source=${localWorkspaceFolder}/.gradle,target=/home/vscode/.gradle,type=bind,consistency=cached"
+    ]
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SharedCore Demo</string>
+    <string name="title_demo">Rust Shared Core Demo</string>
+    <string name="status_loading">Loading…</string>
+    <string name="button_run_model">Run Model</string>
+    <string name="button_start_camera">📷 Start Camera Preview</string>
+    <string name="button_stop_camera">📷 Stop Camera Preview</string>
+    <string name="camera_preview_desc">Camera preview</string>
+    <string name="section_results">Results</string>
+    <string name="results_placeholder">Results will appear here…</string>
+    <string name="error_camera_permission">Camera permission denied</string>
+    <string name="error_no_image">No image available for processing</string>
+    <string name="error_no_model">No model loaded. Initialization may have failed.</string>
+    <string name="status_camera_stopped">Camera stopped</string>
+    <string name="status_camera_started">Camera started - capturing frames…</string>
+    <string name="error_inference_failed">Inference failed:\n%s</string>
+    <string name="error_processing_image">Error processing image: %s</string>
+    <string name="error_test_step">Error in test step %d: %s</string>
+</resources>
