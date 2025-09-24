@@ -28,7 +28,24 @@
             android:text="@string/status_loading"
             android:textAlignment="center"
             android:textSize="16sp"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
+
+        <!-- Model Selection Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select Model:"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinnerModelSelection"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="24dp"
+            android:background="@android:drawable/btn_dropdown"
+            android:padding="12dp" />
 
 
 
@@ -58,13 +75,29 @@
             android:layout_marginBottom="16dp" />
 
         <!-- Results Section -->
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/section_results"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+            
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/section_results"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+            
+            <Button
+                android:id="@+id/buttonCopyResults"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Copy"
+                android:padding="8dp"
+                android:minHeight="36dp"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textViewResult"
@@ -75,7 +108,8 @@
             android:padding="12dp"
             android:textColor="@android:color/white"
             android:minHeight="100dp"
-            android:gravity="top" />
+            android:gravity="top"
+            android:textIsSelectable="true" />
 
     </LinearLayout>
 

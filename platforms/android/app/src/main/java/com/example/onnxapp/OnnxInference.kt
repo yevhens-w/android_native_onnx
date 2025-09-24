@@ -264,6 +264,9 @@ class OnnxInference private constructor() {
     private external fun loadModelNative(modelPath: String): String
     private external fun isModelLoadedNative(): Boolean  
     private external fun getLoadedModelPathNative(): String
+    private external fun setCurrentModelNative(modelPath: String): String
+    private external fun getExecutionProviderInfoNative(): String
+    private external fun getMemoryUsageInfoNative(): String
     
     // Timing methods
     private external fun getInferenceTimeNative(): Float
@@ -302,6 +305,39 @@ class OnnxInference private constructor() {
             if (path.isEmpty()) null else path
         } catch (e: Exception) {
             null
+        }
+    }
+
+    /**
+     * Set the current model for inference
+     */
+    fun setCurrentModel(modelPath: String): String {
+        return try {
+            setCurrentModelNative(modelPath)
+        } catch (e: Exception) {
+            "Failed to set current model: ${e.message}"
+        }
+    }
+
+    /**
+     * Get execution provider information (CPU, GPU, etc.)
+     */
+    fun getExecutionProviderInfo(): String {
+        return try {
+            getExecutionProviderInfoNative()
+        } catch (e: Exception) {
+            "Failed to get execution provider info: ${e.message}"
+        }
+    }
+
+    /**
+     * Get memory usage information (system, process, and ONNX sessions)
+     */
+    fun getMemoryUsageInfo(): String {
+        return try {
+            getMemoryUsageInfoNative()
+        } catch (e: Exception) {
+            "Failed to get memory usage info: ${e.message}"
         }
     }
 }

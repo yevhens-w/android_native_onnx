@@ -8,8 +8,9 @@ name = "onnx_inference"
 crate-type = ["cdylib"]
 
 [dependencies]
-ort = { version = "2.0.0-rc.10", default-features = false, features = ["load-dynamic"] }
+ort = { version = "2.0.0-rc.10", default-features = false, features = ["load-dynamic", "half", "cuda", "nnapi"] }
 image = "0.24"
 ndarray = "0.15"
 jni = "0.21"
 libc = "0.2"
+half = "2.6.0"

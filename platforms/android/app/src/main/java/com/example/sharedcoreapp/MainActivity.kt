@@ -3,6 +3,8 @@ package com.example.sharedcoreapp
 import com.example.onnxapp.OnnxInference
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -15,6 +17,8 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.util.Size
 import android.widget.Toast
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -27,6 +31,15 @@ class MainActivity : AppCompatActivity() {
 
     // ONNX Inference instance
     private var onnxInference: OnnxInference? = null
+
+    // Available models
+    private val availableModels = listOf(
+        "resnet50.onnx",
+        //"resnet50_fp16.onnx",
+        //"resnet50_quantized.onnx"
+
+    )
+    private var currentSelectedModel = "resnet50.onnx"
 
     // Camera2 variables
     private var cameraManager: CameraManager? = null
@@ -60,6 +73,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
+        setupModelSpinner()
+        
         binding.buttonComputeInfo.setOnClickListener {
             currentFrame?.let { bitmap ->
                 testImageProcessingFirst(bitmap)
@@ -70,6 +85,40 @@ class MainActivity : AppCompatActivity() {
 
         binding.buttonCamera.setOnClickListener {
             checkCameraPermissionAndOpen()
+        }
+
+        binding.buttonCopyResults.setOnClickListener {
+            copyResultsToClipboard()
+        }
+    }
+
+    private fun setupModelSpinner() {
+        // Create adapter for spinner
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, availableModels)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        
+        // Set adapter to spinner
+        binding.spinnerModelSelection.adapter = adapter
+        
+        // Set default selection
+        val defaultIndex = availableModels.indexOf(currentSelectedModel)
+        if (defaultIndex >= 0) {
+            binding.spinnerModelSelection.setSelection(defaultIndex)
+        }
+        
+        // Set selection listener
+        binding.spinnerModelSelection.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                val selectedModel = availableModels[position]
+                if (selectedModel != currentSelectedModel) {
+                    currentSelectedModel = selectedModel
+                    switchToModel(selectedModel)
+                }
+            }
+            
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Do nothing
+            }
         }
     }
 
@@ -86,15 +135,38 @@ class MainActivity : AppCompatActivity() {
             val labelsResult = OnnxInference.loadImageNetLabels(this)
             android.util.Log.d("MainActivity", "Labels: $labelsResult")
 
-            // Load the default model into session cache
-            val modelResult = OnnxInference.loadModel(this, "resnet50.onnx")
-            android.util.Log.d("MainActivity", "Model: $modelResult")
+            // Load all available models into session cache
+            val modelResults = mutableListOf<String>()
+            for (modelName in availableModels) {
+                val modelResult = OnnxInference.loadModel(this, modelName)
+                modelResults.add("$modelName: $modelResult")
+                android.util.Log.d("MainActivity", "Model $modelName: $modelResult")
+            }
+
+            // Set the default current model (use absolute path)
+            val defaultModelFile = java.io.File(this.cacheDir, currentSelectedModel)
+            val setCurrentResult = onnxInference?.setCurrentModel(defaultModelFile.absolutePath)
+            android.util.Log.d("MainActivity", "Set current model: $setCurrentResult")
+
+            // Get execution provider info
+            val executionProviderInfo = onnxInference?.getExecutionProviderInfo() ?: "Unknown"
+            android.util.Log.d("MainActivity", "Execution provider: $executionProviderInfo")
+
+            // Get memory usage info
+            val memoryUsageInfo = onnxInference?.getMemoryUsageInfo() ?: "Unknown"
+            android.util.Log.d("MainActivity", "Memory usage: $memoryUsageInfo")
 
             val statusText = buildString {
                 append("✓ ONNX Inference library loaded successfully\n")
                 append("JNI Test: $jniTestResult\n")
                 append("Labels: $labelsResult\n")
-                append("Model: $modelResult")
+                append("Hardware: $executionProviderInfo\n")
+                append("Memory: $memoryUsageInfo\n")
+                append("Models loaded:\n")
+                modelResults.forEach { result ->
+                    append("  $result\n")
+                }
+                append("Current model: $setCurrentResult")
             }
 
             binding.textViewStatus.text = statusText
@@ -103,6 +175,31 @@ class MainActivity : AppCompatActivity() {
             binding.textViewStatus.text = "✗ Failed to load ONNX library: ${e.message}"
             binding.textViewStatus.setTextColor(getColor(android.R.color.holo_red_dark))
             showError("Failed to initialize ONNX library: ${e.message}")
+        }
+    }
+
+    private fun switchToModel(modelName: String) {
+        android.util.Log.d("MainActivity", "Switching to model: $modelName")
+        
+        onnxInference?.let { inference ->
+            // Use absolute path for the model
+            val modelFile = java.io.File(this.cacheDir, modelName)
+            val result = inference.setCurrentModel(modelFile.absolutePath)
+            android.util.Log.d("MainActivity", "Switch result: $result")
+            
+            // Get updated execution provider and memory info
+            val executionProviderInfo = inference.getExecutionProviderInfo()
+            val memoryInfo = inference.getMemoryUsageInfo()
+            android.util.Log.d("MainActivity", "Execution provider after switch: $executionProviderInfo")
+            android.util.Log.d("MainActivity", "Memory usage after switch: $memoryInfo")
+            
+            // Update UI to show current model, hardware and memory info
+            if (result.startsWith("Current model set to:")) {
+                val message = "Switched to $modelName\nHardware: $executionProviderInfo\nMemory: $memoryInfo"
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            } else {
+                showError("Failed to switch model: $result")
+            }
         }
     }
 
@@ -334,6 +431,18 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    private fun copyResultsToClipboard() {
+        val resultText = binding.textViewResult.text.toString()
+        if (resultText.isNotEmpty() && resultText != getString(R.string.results_placeholder)) {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Inference Results", resultText)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Results copied to clipboard", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "No results to copy", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun formatInferenceResult(result: com.example.onnxapp.InferenceResult, modelPath: String?): String {
         val modelName = modelPath?.substringAfterLast("/") ?: "Unknown"
         return if (result.isClassification && result.topPredictions.isNotEmpty()) {
@@ -346,6 +455,15 @@ class MainActivity : AppCompatActivity() {
     private fun formatClassificationResult(result: com.example.onnxapp.InferenceResult, modelName: String): String {
         return buildString {
             append("Model: $modelName\n")
+            
+            // Add hardware info
+            val hardwareInfo = onnxInference?.getExecutionProviderInfo() ?: "Unknown"
+            append("Hardware: $hardwareInfo\n")
+            
+            // Add memory info
+            val memoryInfo = onnxInference?.getMemoryUsageInfo() ?: "Unknown"
+            append("Memory: $memoryInfo\n")
+            
             append(formatTimingInfo(result))
             append("\nTop predictions:\n")
             result.topPredictions.take(3).forEach { pred ->
@@ -357,6 +475,15 @@ class MainActivity : AppCompatActivity() {
     private fun formatGenericResult(result: com.example.onnxapp.InferenceResult, modelName: String): String {
         return buildString {
             append("Model: $modelName\n")
+            
+            // Add hardware info
+            val hardwareInfo = onnxInference?.getExecutionProviderInfo() ?: "Unknown"
+            append("Hardware: $hardwareInfo\n")
+            
+            // Add memory info
+            val memoryInfo = onnxInference?.getMemoryUsageInfo() ?: "Unknown"
+            append("Memory: $memoryInfo\n")
+            
             append(formatTimingInfo(result))
             append("Output shape: ${result.shape.contentToString()}\n")
             append("Data size: ${result.data.size}")
